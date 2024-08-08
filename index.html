@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAFLET</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script src="./data/minimum.js"></script>
+    <script src="./data/medium.js"></script>
+    <script src="./data/low.js"></script>
+    <script src="./data/high.js"></script>
+    <script src="./data/veryhigh.js"></script>
+    <script src="./data/point.js"></script>
+    <script src="./data/leaflet-measure.js"></script>
+    <link rel="stylesheet" href="./data/leaflet-measure.css">
+</head>
+<style>
+    body {
+        padding: 0;
+        margin: 0;
+    }
+
+    #map {
+        width: 100%;
+        height: 100vh;
+    }
+
+    .coordinate {
+        position: absolute;
+        right: 50%;
+        bottom: 10px;
+        color: black;
+        font-size: 14px;
+    }
+
+    .popup-content {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .popup-content .title {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 5px;
+        color: blue;
+    }
+
+    .popup-content .item {
+        margin-bottom: 3px;
+        color: green;
+    }
+
+    .popup-content .label {
+        margin-bottom: 3px;
+        color: blue;
+        border-bottom: 2px solid black;
+    }
+
+    .popup-content .label .span1 {
+        color: red;
+    }
+
+    .popup-content .label .span2 {
+        color: rgba(255, 0, 0, 0.541);
+    }
+
+    .popup-content .label .span3 {
+        color: yellow;
+    }
+
+    .popup-content .label .span4 {
+        color: blue;
+    }
+
+    .popup-content .label .span5 {
+        color: brown;
+    }
+
+    span {
+        color: black;
+    }
+
+    .button-container {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 1000;
+    }
+
+    .button-container button {
+        display: block;
+        margin-bottom: 5px;
+        padding: 10px;
+        background-color: white;
+        border: 1px solid #ccc;
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    <div id="map">
+        <div class="leaflet-control coordinate"></div>
+    </div>
+    <div class="button-container">
+        <button onclick="switchLayer(baseLayer)">OpenStreetMap</button>
+        <button onclick="switchLayer(Esri_WorldImagery)">Esri WorldImagery</button>
+        <button onclick="switchLayer(googleStreets)">Google Streets</button>
+        <button onclick="switchLayer(googleSat)">Google Satellite</button>
+    </div>
+
+    <script>
+        //MAP INITIALIZATION
+        var map = L.map('map').setView([-1.2921, 36.8219], 11);
+        map.zoomControl.setPosition('topleft'); //TO SET THE POSITION OF THE CONTROLS
+
+        //BASE LAYER
+        var baseLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        //ESRI
+        var Esri_WorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        //GOOGLE STREETS
+        var googleStreets = L.tileLayer('http://{s}.google.com/vt?lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        //GOOGLE SATELLITE
+        var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        //MARKER/ POPUP MESSAGE
+        var singlemaker = L.marker([-1.2921, 36.8219], { draggable: true });
+        var popup = singlemaker.bindPopup("hello" + singlemaker.getLatLng()).openPopup();
+        popup.addTo(map);
+
+        //GEOJSON LAYERS
+        var highLayer = L.geoJSON(highJson, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(`
+                    <div class="popup-content">
+                        <div class="title">AREA B</div>
+                        <div class="label">Flood Risk:<div class=span2>high:16.64%</div> </div>
+                        <div class="item">Land Cover: <span>0.33%</span></div>
+                        <div class="item">Slope: <span>0.26%</span> </div>
+                        <div class="item">Precipitation: <span>0.21%</span> </div>
+                        <div class="item">Elevation: <span>0.28%</span> </div>
+                        <div class="item">Streams: <span>0.28%</span> </div>
+                    </div>
+                `);
+            },
+            style: {
+                color: 'rgb(255, 40, 0)',
+                weight: 1,
+                fillOpacity: 0.3,
+                fillColor: 'rgb(255, 40, 0)',
+            }
+        }).addTo(map);
+
+        var mediumLayer = L.geoJSON(mediumJson, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(`
+                    <div class="popup-content">
+                        <div class="title">AREA C</div>
+                        <div class="label">Flood Risk:<div class=span3>medium: 10.25%</div> </div>
+                        <div class="item">Land Cover: <span>0.9%</span></div>
+                        <div class="item">Slope: <span>0.22%</span> </div>
+                        <div class="item">Precipitation: <span>0.20%</span> </div>
+                        <div class="item">Elevation: <span>0.20%</span> </div>
+                        <div class="item">Streams: <span>0.21%</span> </div>
+                    </div>
+                `);
+            },
+            style: {
+                color: 'rgb(255, 255, 0)',
+                weight: 1,
+                fillOpacity: 0.1,
+                fillColor: 'rgb(255, 255, 0)',
+            }
+        }).addTo(map);
+
+        var veryHighLayer = L.geoJSON(veryhighJson, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(`
+                    <div class="popup-content">
+                        <div class="title">AREA A</div>
+                        <div class="label">Flood Risk:<div class=span1>Very high :58.65%</div> </div>
+                        <div class="item">Land Cover:<span>0.44%</span></div>
+                        <div class="item">Slope: <span>0.30%</span> </div>
+                        <div class="item">Precipitation: <span>0.22%</span> </div>
+                        <div class="item">Elevation: <span>0.32%</span> </div>
+                        <div class="item">Streams: <span>0.31%</span> </div>
+                    </div>
+                `);
+            },
+            style: {
+                color: 'red',
+                weight: 0.8,
+                fillOpacity: 0.5,
+                fillColor: 'red',
+            }
+        }).addTo(map);
+
+        var minimumLayer = L.geoJSON(minimumJson, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(`
+                    <div class="popup-content">
+                        <div class="title">AREA E</div>
+                        <div class="label">Flood Risk:<div class=span5>Very Low: 5.64%</div> </div>
+                        <div class="item">Land Cover: <span>0.6%</span></div>
+                        <div class="item">Slope: <span>0.7%</span> </div>
+                        <div class="item">Precipitation: <span>0.17%</span> </div>
+                        <div class="item">Elevation: <span>0.8%</span> </div>
+                        <div class="item">Streams: <span>0.7%</span> </div>
+                    </div>
+                `);
+            },
+            style: {
+                color: 'rgb(59, 33, 95)',
+                weight: 1,
+                fillOpacity: 0.5,
+                fillColor: 'rgb(59, 33, 95)',
+            }
+        }).addTo(map);
+
+        var lowLayer = L.geoJSON(lowJson, {
+            onEachFeature: function (feature, layer) {
+                layer.bindPopup(`
+                    <div class="popup-content">
+                        <div class="title">AREA D</div>
+                        <div class="label">Flood Risk:<div class=span4>low: 8.82%</div> </div>
+                        <div class="item">Land Cover: <span>0.09%</span></div>
+                        <div class="item">Slope: <span>0.15%</span> </div>
+                        <div class="item">Precipitation: <span>0.19%</span> </div>
+                        <div class="item">Elevation: <span>0.12%</span> </div>
+                        <div class="item">Streams: <span>0.14%</span> </div>
+                    </div>
+                `);
+            },
+            style: {
+                color: 'blue',
+                weight: 1,
+                fillOpacity: 0.2,
+                fillColor: 'blue',
+            }
+        }).addTo(map);
+
+        //ADDING SCALE 
+        L.control.scale({ position: 'bottomright' }).addTo(map);
+
+        //LISTENING TO MAP MOVEMENT
+        map.on('mousemove', function (e) {
+            document.getElementsByClassName('coordinate')[0].innerHTML = 'lat:' + e.latlng.lat + " __ " + 'lng:' + e.latlng.lng;
+            console.log('lat:' + e.latlng.lat + 'lng:' + e.latlng.lng)
+        });
+
+        //LEAFLET MEASURE
+        L.control.measure({
+            primaryLengthUnit: 'kilometers',
+            secondaryLengthUnit: 'meters',
+            primaryAreaUnit: 'squaremeters',
+            secondaryAreaUnit: undefined
+        }).addTo(map);
+
+        // Function to switch layers
+        function switchLayer(layer) {
+            map.eachLayer(function (l) {
+                if (l == baseLayer && l == Esri_WorldImagery && l == googleStreets && l == googleSat) {
+                    map.removeLayer(l);
+                }
+            });
+            layer.addTo(map);
+        }
+    </script>
+</body>
+
+</html>
